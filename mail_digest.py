@@ -114,11 +114,9 @@ def fetch_account(acc, st):
     prev = st.get(key, {})
     M = imaplib.IMAP4_SSL(acc["host"], 993, ssl_context=ssl.create_default_context())
     M.login(acc["user"], acc["pw"])
+    typ, d = M.status("INBOX", "(UIDVALIDITY)")
+    uidv = re.search(rb"UIDVALIDITY (\d+)", d[0]).group(1).decode()
     M.select("INBOX", readonly=True)
-    uidv = M.response("UIDVALIDITY")[1][0].decode() if M.response("UIDVALIDITY")[1] else ""
-    if not uidv:
-        typ, d = M.status("INBOX", "(UIDVALIDITY)")
-        uidv = re.search(rb"UIDVALIDITY (\d+)", d[0]).group(1).decode()
 
     if prev.get("uidvalidity") == uidv and prev.get("last_uid"):
         typ, d = M.uid("search", None, f"UID {int(prev['last_uid']) + 1}:*")
